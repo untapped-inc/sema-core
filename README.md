@@ -1,3 +1,3 @@
-# sema-core-new
+# sema-core
 
 The REST API that powers SEMA.
