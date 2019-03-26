@@ -6,9 +6,9 @@ const isAuthenticated = (req, res, next) =>
 
 // Higher order function to take care of authorizations
 // It uses the 'code' column of the role table of the logged in user
-const isAuthorized = (...authorizedRoles) =>
+const isAuthorized = authorizedRoles =>
 	(req, res, next) => {
-		const currentUserRoles = req.user.roles.map(roles => roles.code);
+		const currentUserRoles = req.user.roles.map(role => role.code);
 
 		// Power to the admins
 		if (currentUserRoles.includes('admin')) return next();
