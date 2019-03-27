@@ -6,6 +6,7 @@ const {
 	isAuthorized
 } = require(`${__basedir}/seama_services/auth_services`);
 const Settings = require(`${__basedir}/models`).settings;
+const Parameter = require(`${__basedir}/models`).parameter;
 
 router.get('/', async (req, res) => {
     try {
@@ -24,6 +25,8 @@ router.get('/', async (req, res) => {
     }
 });
 
+// TODO: Only update settings that have been actually updated so we don't have to
+// update everything
 router.put('/', isAuthenticated, isAuthorized(['admin']), async (req, res) => {
     try {
         const { settings } = req.body;
@@ -33,7 +36,26 @@ router.put('/', isAuthenticated, isAuthorized(['admin']), async (req, res) => {
                 value: settings[name]
             }, {
                 where: { name }
-            })
+            });
+
+            // Also update the Volume and Flow Rate parameters when default_unit_system changes
+            if (name === 'default_unit_system') {
+                await Parameter.update({
+                    unit: settings[name] === 'imperial' ? 'gallon' : 'liter'
+                }, {
+                    where: {
+                        name: 'Volume'
+                    }
+                });
+
+                await Parameter.update({
+                    unit: settings[name] === 'imperial' ? 'gpm' : 'lpm'
+                }, {
+                    where: {
+                        name: 'Flow Rate'
+                    }
+                });
+            }
         });
 
         return res.json({
