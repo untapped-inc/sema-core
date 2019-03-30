@@ -22,9 +22,9 @@ SELECT
     product.description AS 'Product Description',
     receipt_line_item.quantity 'Number of Transactions',
     CASE
-        WHEN LOWER(product.unit_measure) = 'liters' THEN receipt_line_item.quantity * product.unit_per_product
+        WHEN LOWER(product.unit_measure) in ('liter', 'gallon') THEN receipt_line_item.quantity * product.unit_per_product
         ELSE 0
-    END as 'Total Liters',
+    END as 'Total Volume',
     receipt_line_item.price_total / receipt_line_item.quantity AS 'Unit Price',
     receipt_line_item.price_total AS 'Total Revenue'
 FROM

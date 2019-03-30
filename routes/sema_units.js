@@ -5,7 +5,7 @@ const sprintf = require('sprintf-js').sprintf;
 require('datejs');
 const semaLog = require(`${__basedir}/seama_services/sema_logger`);
 
-const sqlWaterUnits = 'SELECT COUNT(id) FROM  product where unit_measure = "gallons"';
+const sqlWaterUnits = 'SELECT COUNT(id) FROM  product where unit_measure in ("gallon", "liter")';
 const sqlCurrencyUnits = 'SELECT price_currency FROM  product limit 1';
 
 /*
@@ -20,9 +20,9 @@ router.get('/', async (request, response) => {
 			connection.query(sqlWaterUnits, (err, sqlResult ) => {
 				let gallons = (sqlResult[0]["COUNT(id)"]);
 				if(gallons === 0 ){
-					result.waterUnits = "liters";
+					result.waterUnits = "liter";
 				}else{
-					result.waterUnits = "gallons";
+					result.waterUnits = "gallon";
 				}
 				connection.query(sqlCurrencyUnits, (err, sqlResult ) => {
 					result.currencyUnits = sqlResult[0].price_currency;
