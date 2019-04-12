@@ -78,7 +78,17 @@ router.put('/:id', async (req, res) => {
 				updateCustomers(sqlUpdateCustomers, customerParams, res, customer);
 
 			}, function(reason) {
-				res.status(404).send("PUT customer: Could not find customer with id " + req.params.id);
+				// If it doesn't find the customer to update, it will create it
+				// TODO: Use Sequelize::upsert
+				let customer = new Customer();
+				customer.requestToClass(req);
+
+				let postSqlParams = [customer.customerId, getUTCDate(customer.createdDate),
+					customer.name, customer.customerTypeId, customer.salesChannelId, customer.siteId,
+					customer.dueAmount, customer.address, customer.gpsCoordinates, customer.phoneNumber, 1 ];
+
+				insertCustomers(customer, sqlInsertCustomer, postSqlParams, res);
+				// res.status(404).send("PUT customer: Could not find customer with id " + req.params.id);
 			});
 		}
 	});
