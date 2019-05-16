@@ -97,6 +97,7 @@ app.use(cookieParser());
 
 // Use for react
 app.use(express.static(path.join(__dirname, 'public_react/build/')));
+app.use(express.static(path.join(__dirname, 'public/clients')));
 app.use(express.static(path.join('..', 'documentations')));
 
 app.use('/', index);
@@ -131,7 +132,7 @@ app.use('/sema/dashboard/site/water-summary/', sema_water_summary);
 app.use('/sema/data-export', isAuthenticated, sema_data_export);
 app.use('/sema/data-export', isAuthenticated, sema_data_export);
 app.use('/sema/settings', sema_settings);
-app.use('/dashboard', sema_dashboard);
+app.use('/dataset/dashboard', sema_dashboard);
 
 app.use('/sema/users', isAuthenticated, sema_users);
 app.use('/sema/admin/products', isAuthenticated, sema_admin_products);
