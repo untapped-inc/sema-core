@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
 
         // On error, return a generic error message and log the error
         if (err0) {
-            semaLog.warn(`sema_dashboard - Fetch - Error: ${JSON.stringify(err)}`);
+            semaLog.warn(`sema_dashboard - Fetch - Error: ${JSON.stringify(err0)}`);
             return res.status(500).json({ msg: "Internal Server Error" });
         } else if (!kiosk) {
             return res.json({
