@@ -48,7 +48,8 @@ router.get('/', async (req, res) => {
                         endDate
                     ]
                 },
-                kiosk_id: kiosk.id
+                kiosk_id: kiosk.id,
+                active: true
             },
             group: [Sequelize.fn('date_format', Sequelize.col('receipt_details.created_at'), '%b %e')],
             order: [
