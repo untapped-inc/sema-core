@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
             },
             group: [Sequelize.fn('date_format', Sequelize.col('receipt_details.created_at'), '%b %e')],
             order: [
-                ['created_at', 'ASC']
+                [Sequelize.fn('date_format', Sequelize.col('receipt_details.created_at'), '%b %e'), 'ASC']
             ],
             raw: true
         }));
