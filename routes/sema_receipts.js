@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const Receipt = require('../model_layer/Receipt');
 const R = require(`${__basedir}/models`).receipt;
 const CustomerAccount = require(`${__basedir}/models`).customer_account;
+const User = require(`${__basedir}/models`).user;
 const ReceiptLineItem = require(`${__basedir}/models`).receipt_line_item;
 const Product = require(`${__basedir}/models`).product;
 const Sequelize = require('sequelize');
@@ -15,14 +16,14 @@ const moment = require('moment');
 var sqlInsertReceipt = "INSERT INTO receipt " +
 	"(id, created_at, updated_at, currency_code, " +
 	"customer_account_id, amount_cash, amount_mobile, amount_loan, amount_card, " +
-	"kiosk_id, payment_type, sales_channel_id, customer_type_id, total, cogs, uuid )" +
-	"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )";
+	"kiosk_id, payment_type, sales_channel_id, customer_type_id, total, cogs, uuid, user_id)" +
+	"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 var sqlInsertReceiptActive = "INSERT INTO receipt " +
 	"(id, created_at, updated_at, currency_code, " +
 	"customer_account_id, amount_cash, amount_mobile, amount_loan, amount_card, " +
-	"kiosk_id, payment_type, sales_channel_id, customer_type_id, total, cogs, uuid, active)" +
-	"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	"kiosk_id, payment_type, sales_channel_id, customer_type_id, total, cogs, uuid, user_id, active)" +
+	"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 var sqlInsertReceiptLineItem = "INSERT INTO receipt_line_item " +
 	"(created_at, updated_at, currency_code, price_total, quantity, receipt_id, product_id, cogs_total) " +
@@ -131,6 +132,18 @@ router.post('/', async (req, res) => {
 	req.check("cogs", "cogs is missing").exists();
 	req.check("receiptId", "receiptId is missing").exists();
 	req.check("products", "products is missing").exists();
+	req.check("userName", "userName is missing").exists();
+
+	const [err, currentUser] = await __hp(User.findOne({
+		where: {
+			username: req.body.userName
+		}
+	}));
+
+	if (err) {
+		semaLog.warn(`sema_receipts - Error: ${err}`);
+		return res.status(500).send({ msg: "Internal Server Error" });
+	}
 
 	console.log(JSON.stringify(req.body));
 
@@ -159,7 +172,7 @@ router.post('/', async (req, res) => {
 
 				let postSqlParams = [receipt.id, receipt.createdDate, receipt.updatedDate, receipt.currencyCode,
 				receipt.customerId, receipt.amountCash, receipt.amountMobile, receipt.amountLoan, receipt.amountCard,
-				receipt.siteId, receipt.paymentType, receipt.salesChannelId, receipt.customerTypeId, receipt.total, receipt.cogs, receipt.receiptId];
+				receipt.siteId, receipt.paymentType, receipt.salesChannelId, receipt.customerTypeId, receipt.total, receipt.cogs, receipt.receiptId, currentUser.id];
 
 				if ('active' in req.body) {
 					postSqlParams.push(req.body.active);
