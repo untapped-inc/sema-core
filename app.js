@@ -98,12 +98,6 @@ app.use(cookieParser());
 // Use for react
 app.use(express.static(path.join(__dirname, 'public_react/build/')));
 app.use(express.static(path.join(__dirname, 'public/clients')));
-app.use(express.static(path.join('..', 'documentations')));
-
-app.use('/', index);
-app.use('/Sales', index);
-app.use('/Volumes', index);
-app.use('/Demographics', index);
 
 app.use('/untapped/health-check', seama_health_check);
 app.use('/untapped/login', seama_login);
@@ -143,6 +137,9 @@ app.use(
 	sema_product_categories
 );
 app.use('/sema/api/sales-channel', isAuthenticated, sema_admin_sales_channel);
+
+// Send any other page to the React client
+app.use('*', index);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
