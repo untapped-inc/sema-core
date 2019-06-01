@@ -2,6 +2,7 @@ class Product {
 
 	constructor(vals) {
 		this._productId = vals["id"];
+		this._name =vals["name"];
 		this._version = vals["version"];
 		this._active = vals["active"][0] === 1 ? true : false;
 		this._base64encodedImage = vals["base64encoded_image"];
@@ -22,6 +23,7 @@ class Product {
 		return {
 			productId: this._productId,
 			active: this._active,
+			name: this._name,
 			base64encodedImage: this._base64encodedImage,
 			categoryId: this._categoryId,
 			description: this._description,
@@ -55,6 +57,10 @@ class Product {
 
 	get description() {
 		return this._description;
+	}
+
+	get name() {
+		return this._name;
 	}
 
 	get maximumQuantity() {
