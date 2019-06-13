@@ -3,6 +3,9 @@ const router = express.Router();
 const semaLog = require(`${__basedir}/seama_services/sema_logger`);
 const User = require(`${__basedir}/models`).user;
 const Role = require(`${__basedir}/models`).role;
+const Device = require(`${__basedir}/models`).device;
+const Sensor = require(`${__basedir}/models`).sensor;
+const DeviceWaterAmount = require(`${__basedir}/models`).device_water_amount;
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 
@@ -41,7 +44,49 @@ router.post('/', async (req, res) => {
 		}
 
 		// Everything went well
-		const token =  jwt.sign(await user.toJSON(), process.env.JWT_SECRET, {
+		let payload = {};
+
+		// Figure out if user is a device
+		const userRoles = user.roles.map(role => role.code);
+
+		Device.hasMany(Sensor);
+		Device.hasMany(DeviceWaterAmount);
+
+		if (userRoles.includes('device')) {
+			const device = await Device.findOne({
+				where: {
+					user_id: user.id
+				},
+				include: [
+					{ model: Sensor },
+					{
+						model: DeviceWaterAmount,
+						order: [['created_at', 'DESC']],
+						limit: 1
+					}
+				]
+			});
+
+			// If corresponding device is not found, return an error
+			if (!device) {
+				semaLog.warn('sema_login - Device Not Set');
+				return res.status(404).send({ msg: "Device Not Set" });
+			}
+
+			payload.user = await user.toJSON();
+			payload.device = await device.toJSON();
+			payload.device.max_water_amount = payload.device.device_water_amounts[0].water_amount;
+
+			delete payload.device.device_water_amounts;
+		} else {
+			payload = await user.toJSON();
+		}
+
+		// If it is, find the current max water amount from device_water_amount
+
+		// Add the max water amount and the device current water amount to the token
+
+		const token =  jwt.sign(payload, process.env.JWT_SECRET, {
 			expiresIn: process.env.JWT_EXPIRATION_LENGTH
 		});
 
