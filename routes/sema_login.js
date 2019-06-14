@@ -75,16 +75,15 @@ router.post('/', async (req, res) => {
 
 			payload.user = await user.toJSON();
 			payload.device = await device.toJSON();
-			payload.device.max_water_amount = payload.device.device_water_amounts[0].water_amount;
+			payload.device.max_water_amount = {
+				value: payload.device.device_water_amounts[0].water_amount,
+				created_at: payload.device.device_water_amounts[0].created_at
+			};
 
 			delete payload.device.device_water_amounts;
 		} else {
 			payload = await user.toJSON();
 		}
-
-		// If it is, find the current max water amount from device_water_amount
-
-		// Add the max water amount and the device current water amount to the token
 
 		const token =  jwt.sign(payload, process.env.JWT_SECRET, {
 			expiresIn: process.env.JWT_EXPIRATION_LENGTH
