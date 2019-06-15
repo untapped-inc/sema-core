@@ -71,6 +71,9 @@ router.post('/', async (req, res) => {
 			if (!device) {
 				semaLog.warn('sema_login - Device Not Set');
 				return res.status(404).send({ msg: "Device Not Set" });
+			} else if (!device.device_water_amounts.length) {
+				semaLog.warn('sema_login - No water amounts set for device');
+				return res.status(404).send({ msg: "No water amount set for device" });
 			}
 
 			payload.user = await user.toJSON();
