@@ -3,6 +3,10 @@ const router = express.Router();
 require('datejs');
 const semaLog = require('../seama_services/sema_logger');
 const Reading = require(`${__basedir}/models`).reading;
+const Sensor = require(`${__basedir}/models`).sensor;
+const Device = require(`${__basedir}/models`).device;
+const Role = require(`${__basedir}/models`).role;
+const DeviceWaterAmount = require(`${__basedir}/models`).device_water_amount;
 const User = require(`${__basedir}/models`).user;
 const { Sequelize } = require(`${__basedir}/models`);
 const { Op } = Sequelize;
@@ -100,6 +104,100 @@ const parseReadings = (readings, userId, siteId) => {
 	}, []);
 }
 
+router.post('/pgwc', async (req, res) => {
+	semaLog.info('water-operations PGWC Entry');
+
+	const {
+		clientReadings,
+		clientDevice
+	} = req.body;
+
+	Device.hasMany(Sensor);
+	Device.hasMany(DeviceWaterAmount);
+
+	let [err0, device] = await __hp(Device.findOne({
+		where: {
+			user_id: clientDevice.user_id
+		},
+		include: [
+			{ model: Sensor },
+			{
+				model: DeviceWaterAmount,
+				order: [['created_at', 'DESC']],
+				limit: 1
+			}
+		]
+	}));
+
+	if (err0) {
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err)}`);
+		return res.status(500).json({ msg: "Internal Server Error"});
+	} else if (!device) {
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err)}`);
+		return res.status(404).json({ msg: "Device not found"});
+	}
+
+	const maxWaterAmountDate = device.device_water_amounts[0].created_at;
+
+	// Insert readings then reduce their value from the currentWaterAmount.
+	// If the reading date of the reading is older than the last set max amount
+	// for the device, it's an old reading that wasn't synced yet, we don't
+	// reduce it from the current water amount
+	for (reading of clientReadings) {
+		const [err1, savedReading] = await __hp(Reading.create(reading));
+
+		// We only reduce it if it were correctly inserted
+		// And if the reading was read after the max amount was set
+		if (!err1) {
+			if (moment(savedReading.created_at).isAfter(maxWaterAmountDate)) {
+				device.current_water_amount -= savedReading.value;
+
+				await device.save();
+			}
+		} else {
+			// Something's wrong with this particular reading and it threw an error
+			// TODO: It should never get to this point because we're checking for the data integrity
+			// in the beginning with Yup
+			// console.log(err1);
+		}
+	}
+
+	// Get the user by primary key with the assigned role code
+	let [err2, user] = await __hp(User.findByPk(device.user_id, {
+		include: [{
+			model: Role,
+			attributes: ['code']
+		}]
+	}));
+
+	if (err2) {
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err2)}`);
+		return res.status(500).json({ msg: "Internal Server Error"});
+	} if (!user || !Object.keys(user).length) {
+		semaLog.warn('sema_water_operations:PGWC Entry - User not found');
+		return res.status(404).send({ msg: "User not found" });
+	}
+
+	user = await user.toJSON();
+	device = await device.toJSON();
+
+	const payload = {
+		msg: "Successfully synchronized",
+		device,
+		user
+	};
+
+	payload.device.max_water_amount = {
+		value: payload.device.device_water_amounts[0].water_amount,
+		created_at: payload.device.device_water_amounts[0].created_at
+	};
+
+	// Delete the device_water_amounts property as to not confuse the client
+	delete payload.device.device_water_amounts;
+
+	res.json(payload);
+});
+
 /* POST reading values from manual entry */
 router.post('/:siteId', async (req, res) => {
 	semaLog.info('water-operations Entry');
@@ -133,7 +231,7 @@ router.post('/:siteId', async (req, res) => {
 			kiosk_id: siteId
 		}
 	}));
-	
+
 	// On error, return a generic error message and log the error
 	if (err) {
 		semaLog.warn(`sema_water_operations - Error: ${JSON.stringify(err)}`);
