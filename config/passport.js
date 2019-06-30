@@ -14,14 +14,22 @@ module.exports = () => {
 		User
 			.findOne({
 				where: {
-					id: jwt_payload.id
+					id: jwt_payload.id || jwt_payload.user.id
 				},
 				include: [Role],
 				attributes: {
 					exclude: ['password']
 				}
 			})
-			.then(user => done(null, user))
+			.then(user => {
+				// If it's a device session, we log the sent payload
+				// If it's a user, we log the user info
+				if (jwt_payload.user && jwt_payload.device) {
+					done(null, jwt_payload)
+				} else {
+					done(null, user)
+				}
+			})
 			.catch(err => done(err, false));
 	}));
 };
