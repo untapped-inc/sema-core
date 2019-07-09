@@ -148,7 +148,7 @@ router.post('/pgwc', async (req, res) => {
 	}, null);
 
 	if (!sensorA) {
-		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err)}`);
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: No sensorA`);
 		return res.status(404).json({ msg: "sensorA not found"});
 	}
 
@@ -166,7 +166,7 @@ router.post('/pgwc', async (req, res) => {
 	}, null);
 
 	if (!sensorB) {
-		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err)}`);
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: no sensorB`);
 		return res.status(404).json({ msg: "sensorB not found"});
 	}
 
