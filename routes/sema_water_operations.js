@@ -152,6 +152,12 @@ router.post('/pgwc', async (req, res) => {
 			if (moment(savedReading.created_at).isAfter(maxWaterAmountDate)) {
 				device.current_water_amount -= savedReading.value;
 
+				// If the current water amount is negative after this,
+				// this device doesn't have any water amount left
+				if (device.current_water_amount < 0) {
+					device.current_water_amount = 0;
+				}
+
 				await device.save();
 			}
 		} else {
