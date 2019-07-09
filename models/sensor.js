@@ -12,6 +12,10 @@ module.exports = function(sequelize, DataTypes) {
 			type: DataTypes.STRING(255),
 			allowNull: false
 		},
+		codename: {
+			type: DataTypes.STRING(255),
+			allowNull: false
+		},
 		sampling_site_id: {
 			type: DataTypes.BIGINT,
 			allowNull: false,
