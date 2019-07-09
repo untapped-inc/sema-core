@@ -141,13 +141,49 @@ router.post('/pgwc', async (req, res) => {
 		return res.status(404).json({ msg: "Device not found"});
 	}
 
+	// Add the other necessary fields to the readings of sensorA
+	const sensorA = device.sensors.reduce((final, sensor) => {
+		if (sensor.codename === 'sensorA') return sensor;
+		return final;
+	}, null);
+
+	if (!sensorA) {
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err)}`);
+		return res.status(404).json({ msg: "sensorA not found"});
+	}
+
+	clientReadings.sensorA = clientReadings.sensorA.map(sensor => {
+		sensor.parameter_id = sensorA.parameter_id;
+		sensor.sampling_site_id = sensorA.sampling_site_id;
+		sensor.user_id = device.user_id;
+		sensor.kiosk_id = device.kiosk_id;
+	});
+
+	// Add the other necessary fields to the readings of sensorB
+	const sensorB = device.sensors.reduce((final, sensor) => {
+		if (sensor.codename === 'sensorB') return sensor;
+		return final;
+	}, null);
+
+	if (!sensorB) {
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err)}`);
+		return res.status(404).json({ msg: "sensorB not found"});
+	}
+
+	clientReadings.sensorB = clientReadings.sensorB.map(sensor => {
+		sensor.parameter_id = sensorB.parameter_id;
+		sensor.sampling_site_id = sensorB.sampling_site_id;
+		sensor.user_id = device.user_id;
+		sensor.kiosk_id = device.kiosk_id;
+	});
+
 	const maxWaterAmountDate = device.device_water_amounts[0].created_at;
 
-	// Insert readings then reduce their value from the currentWaterAmount.
+	// Insert sensorA readings then reduce their value from the currentWaterAmount.
 	// If the reading date of the reading is older than the last set max amount
 	// for the device, it's an old reading that wasn't synced yet, we don't
 	// reduce it from the current water amount
-	for (reading of clientReadings) {
+	for (reading of clientReadings.sensorA) {
 		const [err1, savedReading] = await __hp(Reading.create(reading));
 
 		// We only reduce it if it were correctly inserted
@@ -170,6 +206,11 @@ router.post('/pgwc', async (req, res) => {
 			// in the beginning with Yup
 			// console.log(err1);
 		}
+	}
+
+	// Insert sensorB readings
+	for (reading of clientReadings.sensorB) {
+		await __hp(Reading.create(reading));
 	}
 
 	// Get the user by primary key with the assigned role code
