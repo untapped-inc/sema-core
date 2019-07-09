@@ -104,7 +104,7 @@ app.use('/untapped/login', seama_login);
 app.use('/untapped/kiosks', isAuthenticated, seama_kiosks);
 app.use('/untapped/sales', isAuthenticated, sema_sales);
 app.use('/untapped/sales-by-channel', isAuthenticated, sema_sales_by_channel);
-app.use('/sema/water-ops', isAuthenticated, sema_water_operations);
+app.use('/sema/water-ops', sema_water_operations);
 
 app.use('/sema/health-check', seama_health_check);
 app.use('/sema/login', seama_login);
