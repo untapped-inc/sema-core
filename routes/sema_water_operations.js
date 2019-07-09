@@ -112,6 +112,10 @@ router.post('/pgwc', async (req, res) => {
 		clientDevice
 	} = req.body;
 
+	console.log('SENT BY THE DEVICE');
+	console.dir(req.body);
+	console.log('SENT BY THE DEVICE');
+
 	Device.hasMany(Sensor);
 	Device.hasMany(DeviceWaterAmount);
 
