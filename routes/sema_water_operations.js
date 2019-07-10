@@ -104,24 +104,17 @@ const parseReadings = (readings, userId, siteId) => {
 	}, []);
 }
 
-router.post('/pgwc', async (req, res) => {
-	semaLog.info('water-operations PGWC Entry');
-
+router.get('/pgwc/:deviceId', async (req, res) => {
 	const {
-		clientReadings,
-		clientDevice
-	} = req.body;
-
-	console.log('SENT BY THE DEVICE');
-	console.dir(req.body);
-	console.log('SENT BY THE DEVICE');
+		deviceId
+	} = req.params;
 
 	Device.hasMany(Sensor);
 	Device.hasMany(DeviceWaterAmount);
 
 	let [err0, device] = await __hp(Device.findOne({
 		where: {
-			user_id: clientDevice.user_id
+			id: deviceId
 		},
 		include: [
 			{ model: Sensor },
@@ -134,10 +127,62 @@ router.post('/pgwc', async (req, res) => {
 	}));
 
 	if (err0) {
-		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err)}`);
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err0)}`);
 		return res.status(500).json({ msg: "Internal Server Error"});
 	} else if (!device) {
-		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err)}`);
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err0)}`);
+		return res.status(404).json({ msg: "Device not found"});
+	}
+
+	const payload = {
+		msg: "Successfully connected",
+		device: {
+			id: device.id,
+			current_water_amount: device.current_water_amount,
+			max_water_amount: {
+				value: device.device_water_amounts[0].water_amount,
+				created_at: device.device_water_amounts[0].created_at
+			}
+		}
+	};
+
+	res.json(payload);
+});
+
+router.post('/pgwc', async (req, res) => {
+	semaLog.info('water-operations PGWC Entry');
+
+	const {
+		clientReadings,
+		clientDevice
+	} = req.body;
+
+	console.log('SENT BY THE DEVICE');
+	console.log(JSON.stringify(req.body));
+	console.log('SENT BY THE DEVICE');
+
+	Device.hasMany(Sensor);
+	Device.hasMany(DeviceWaterAmount);
+
+	let [err0, device] = await __hp(Device.findOne({
+		where: {
+			id: clientDevice.id
+		},
+		include: [
+			{ model: Sensor },
+			{
+				model: DeviceWaterAmount,
+				order: [['created_at', 'DESC']],
+				limit: 1
+			}
+		]
+	}));
+
+	if (err0) {
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err0)}`);
+		return res.status(500).json({ msg: "Internal Server Error"});
+	} else if (!device) {
+		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err0)}`);
 		return res.status(404).json({ msg: "Device not found"});
 	}
 
@@ -157,6 +202,8 @@ router.post('/pgwc', async (req, res) => {
 		sensor.sampling_site_id = sensorA.sampling_site_id;
 		sensor.user_id = device.user_id;
 		sensor.kiosk_id = device.kiosk_id;
+
+		return sensor;
 	});
 
 	// Add the other necessary fields to the readings of sensorB
@@ -175,6 +222,8 @@ router.post('/pgwc', async (req, res) => {
 		sensor.sampling_site_id = sensorB.sampling_site_id;
 		sensor.user_id = device.user_id;
 		sensor.kiosk_id = device.kiosk_id;
+
+		return sensor;
 	});
 
 	const maxWaterAmountDate = device.device_water_amounts[0].created_at;
@@ -213,38 +262,17 @@ router.post('/pgwc', async (req, res) => {
 		await __hp(Reading.create(reading));
 	}
 
-	// Get the user by primary key with the assigned role code
-	let [err2, user] = await __hp(User.findByPk(device.user_id, {
-		include: [{
-			model: Role,
-			attributes: ['code']
-		}]
-	}));
-
-	if (err2) {
-		semaLog.warn(`sema_water_operations:PGWC Entry - Error: ${JSON.stringify(err2)}`);
-		return res.status(500).json({ msg: "Internal Server Error"});
-	} if (!user || !Object.keys(user).length) {
-		semaLog.warn('sema_water_operations:PGWC Entry - User not found');
-		return res.status(404).send({ msg: "User not found" });
-	}
-
-	user = await user.toJSON();
-	device = await device.toJSON();
-
 	const payload = {
 		msg: "Successfully synchronized",
-		device,
-		user
+		device: {
+			id: device.id,
+			current_water_amount: device.current_water_amount,
+			max_water_amount: {
+				value: device.device_water_amounts[0].water_amount,
+				created_at: device.device_water_amounts[0].created_at
+			}
+		}
 	};
-
-	payload.device.max_water_amount = {
-		value: payload.device.device_water_amounts[0].water_amount,
-		created_at: payload.device.device_water_amounts[0].created_at
-	};
-
-	// Delete the device_water_amounts property as to not confuse the client
-	delete payload.device.device_water_amounts;
 
 	res.json(payload);
 });
