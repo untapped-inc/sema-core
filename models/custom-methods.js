@@ -19,24 +19,6 @@ module.exports = models => {
 		return bcrypt.compareSync(pw, this.password);
 	};
 
-	// We override the default toJSON so we NEVER send the password
-	// to the client
-	models.user.prototype.toJSON = async function() {
-		var values = Object.assign({}, this.get());
-		delete values.password;
-		let role = await this.getRoles();
-
-		return {
-			id: values.id,
-			email: values.email,
-			username: values.username,
-			firstName: values.first_name,
-			lastName: values.last_name,
-			active: values.active,
-			role: role.map(r => ({ code: r.code, authority: r.authority }))
-		};
-	};
-
 	models.product.prototype.toJSON = async function() {
 		const values = Object.assign({}, this.get());
 		const category = await this.getProduct_category();
