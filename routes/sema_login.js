@@ -3,7 +3,6 @@ const router = express.Router();
 const semaLog = require(`${__basedir}/seama_services/sema_logger`);
 const User = require(`${__basedir}/models`).user;
 const Role = require(`${__basedir}/models`).role;
-const Kiosk = require(`${__basedir}/models`).kiosk;
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 
@@ -25,10 +24,7 @@ router.post('/', async (req, res) => {
 			where: whereClause,
 			include: [{
 				model: Role,
-				as: 'roles',
-			}, {
-				model: Kiosk,
-				as: 'kiosks',
+				attributes: ['code']
 			}]
 		});
 
@@ -44,13 +40,24 @@ router.post('/', async (req, res) => {
 			return res.status(401).send({ msg: "Invalid Credentials" });
 		}
 
-		const kiosks = await Kiosk.findAll({ raw: true });
-		const userJson = await user.toJSON();
+		var userValues = JSON.parse(JSON.stringify(user));
 
-		delete userJson.password;
+		delete userValues.password;
+
+		const role = await user.getRoles();
+
+		const finalUser = {
+			id: userValues.id,
+			email: userValues.email,
+			username: userValues.username,
+			firstName: userValues.first_name,
+			lastName: userValues.last_name,
+			active: userValues.active,
+			role: role.map(r => ({ code: r.code, authority: r.authority }))
+		};
 
 		// Everything went well
-		const token =  jwt.sign(userJson, process.env.JWT_SECRET, {
+		const token =  jwt.sign(finalUser, process.env.JWT_SECRET, {
 			expiresIn: process.env.JWT_EXPIRATION_LENGTH
 		});
 
@@ -58,8 +65,7 @@ router.post('/', async (req, res) => {
 
 		res.json({
 			version: req.app.get('sema_version'),
-			token,
-			kiosks,
+			token
 		});
 	} catch(err) {
 		semaLog.warn(`sema_login - Error: ${err}`);
