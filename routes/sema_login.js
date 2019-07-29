@@ -3,6 +3,7 @@ const router = express.Router();
 const semaLog = require(`${__basedir}/seama_services/sema_logger`);
 const User = require(`${__basedir}/models`).user;
 const Role = require(`${__basedir}/models`).role;
+const Kiosk = require(`${__basedir}/models`).kiosk;
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 
@@ -24,7 +25,10 @@ router.post('/', async (req, res) => {
 			where: whereClause,
 			include: [{
 				model: Role,
-				attributes: ['code']
+				as: 'roles',
+			}, {
+				model: Kiosk,
+				as: 'kiosks',
 			}]
 		});
 
@@ -40,8 +44,13 @@ router.post('/', async (req, res) => {
 			return res.status(401).send({ msg: "Invalid Credentials" });
 		}
 
+		const kiosks = await Kiosk.findAll({ raw: true });
+		const userJson = await user.toJSON();
+
+		delete userJson.password;
+
 		// Everything went well
-		const token =  jwt.sign(await user.toJSON(), process.env.JWT_SECRET, {
+		const token =  jwt.sign(userJson, process.env.JWT_SECRET, {
 			expiresIn: process.env.JWT_EXPIRATION_LENGTH
 		});
 
@@ -49,7 +58,8 @@ router.post('/', async (req, res) => {
 
 		res.json({
 			version: req.app.get('sema_version'),
-			token
+			token,
+			kiosks,
 		});
 	} catch(err) {
 		semaLog.warn(`sema_login - Error: ${err}`);
