@@ -34,6 +34,14 @@ module.exports = function(sequelize, DataTypes) {
 				model: 'region',
 				key: 'id'
 			}
+		},
+		consumer_base: {
+			type: DataTypes.INTEGER(11),
+			allowNull: true
+		},
+		gps_coordinates: {
+			type: DataTypes.STRING(255),
+			allowNull: true
 		}
 	}, {
 		tableName: 'kiosk',
