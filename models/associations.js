@@ -1,6 +1,8 @@
 module.exports = models => {
 	models.user.belongsToMany(models.role, { through: 'user_role' });
 	models.role.belongsToMany(models.user, { through: 'user_role' });
+	models.user.belongsToMany(models.kiosk, { through: 'user_kiosk', as: 'kiosks' });
+	models.kiosk.belongsToMany(models.user, { through: 'user_kiosk', as: 'users' });
 	models.product.belongsTo(models.product_category, {
 		foreignKey: 'category_id'
 	});
