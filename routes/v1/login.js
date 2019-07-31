@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const semaLog = require(`${__basedir}/seama_services/sema_logger`);
 const User = require(`${__basedir}/models`).user;
 const Role = require(`${__basedir}/models`).role;
 const Kiosk = require(`${__basedir}/models`).kiosk;
@@ -38,19 +37,17 @@ router.post('/', async (req, res) => {
 		});
 
 		if (!user) {
-			semaLog.warn('sema_login - Invalid Credentials');
 			return res.status(401).send({ msg: 'Invalid Credentials' });
 		}
 
 		const isValidPassword = await user.comparePassword(password);
 
 		if (!isValidPassword) {
-			semaLog.warn('sema_login - Invalid Credentials');
 			return res.status(401).send({ msg: 'Invalid Credentials' });
 		}
 
 		const kiosks = await Kiosk.findAll({ raw: true });
-		const userJson = await user.toJSON();
+		const userJson = JSON.parse(JSON.stringify(user));
 
 		delete userJson.password;
 
@@ -59,15 +56,12 @@ router.post('/', async (req, res) => {
 			expiresIn: process.env.JWT_EXPIRATION_LENGTH
 		});
 
-		semaLog.info('sema_login - succeeded');
-
 		res.json({
 			version: req.app.get('sema_version'),
 			token,
 			kiosks
 		});
 	} catch (err) {
-		semaLog.warn(`sema_login - Error: ${err}`);
 		return res.status(500).send({ msg: 'Internal Server Error' });
 	}
 });
