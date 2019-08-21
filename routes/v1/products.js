@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Product = require(`${__basedir}/models`).reading;
+const Product = require(`${__basedir}/models`).product;
 
 router.get('/', async (req, res) => {
 	const {
@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
 	if (Number(no_image)) {
 		queryObj.attributes = {
 			exclude: ['base64encoded_image']
-		}
+		};
 	}
 
 	const products = await Product.findAll(queryObj);
