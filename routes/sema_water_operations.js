@@ -146,6 +146,10 @@ router.get('/pgwc/:deviceId', async (req, res) => {
 		}
 	};
 
+	device.current_water_amount = 0;
+
+	await device.save();
+
 	res.json(payload);
 });
 
