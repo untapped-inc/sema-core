@@ -49,7 +49,7 @@ It should return something like: `{"server":"Ok","database":"Ok","version":"0.0.
 
 ## Contributing
 
-TODO
+Please, read our [Contribution Guidelines](https://github.com/untapped-inc/sema-core/blob/master/CONTRIBUTING.md) if you wish to participate into the development of SEMA.
 
 ## Building for Production
 
