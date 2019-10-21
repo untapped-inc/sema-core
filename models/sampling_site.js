@@ -1,12 +1,20 @@
 /* jshint indent: 1 */
 
 module.exports = function(sequelize, DataTypes) {
-	return sequelize.define('kiosk', {
+	return sequelize.define('sampling_site', {
 		id: {
 			type: DataTypes.BIGINT,
 			allowNull: false,
 			primaryKey: true,
 			autoIncrement: true
+		},
+		is_used_for_totalizer: {
+			type: DataTypes.BOOLEAN,
+			allowNull: false
+		},
+		name: {
+			type: DataTypes.STRING(255),
+			allowNull: false
 		},
 		created_at: {
 			type: DataTypes.DATE,
@@ -18,33 +26,16 @@ module.exports = function(sequelize, DataTypes) {
 			allowNull: false,
 			defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
 		},
-		active: {
-			type: DataTypes.BOOLEAN,
-			allowNull: false,
-			defaultValue: '1'
-		},
-		name: {
-			type: DataTypes.STRING(150),
-			allowNull: false
-		},
-		region_id: {
+		followup_to_site_id: {
 			type: DataTypes.BIGINT,
-			allowNull: false,
+			allowNull: true,
 			references: {
-				model: 'region',
+				model: 'sampling_site',
 				key: 'id'
 			}
-		},
-		consumer_base: {
-			type: DataTypes.INTEGER(11),
-			allowNull: true
-		},
-		gps_coordinates: {
-			type: DataTypes.STRING(255),
-			allowNull: true
 		}
 	}, {
-		tableName: 'kiosk',
+		tableName: 'sampling_site',
 		timestamps: false,
 		underscored: true
 	});
